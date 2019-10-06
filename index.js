@@ -7,18 +7,25 @@ const fs = require('fs');
 let app = express();
 
 app.all('/updatelist', (req, res) => {
+        console.log('...');
         fs.readdir('folder/', (err, items) => {
             fs.writeFile('folder/list.txt', '', (err) => {})
-            _.each(items, (item) => {
-                console.log('!')
-                fs.appendFile('folder/list.txt', item + '\r\n', (err) => {})
-            });
-        })
 
-        setTimeout(function(){
-            res.writeHead(301, {Location: '/'});
-            res.end();
-        }, 1000)
+            Promise.all(_.map(items, async (item) => {
+                return new Promise((resolve) => {
+                    fs.appendFile('folder/list.txt', item + '\r\n', (err) => {
+                        console.log('f');
+                        setTimeout(resolve, 1000);
+                    });   
+                })
+            }))
+            .then(() => {
+                console.log('!');
+                res.writeHead(301, {Location: '/'});
+                res.end();
+            })
+            
+        })
     })
 
 app.get('/', (req, res) => {
