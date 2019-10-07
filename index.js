@@ -4,26 +4,33 @@ const PORT = process.env.PORT || 8080;
 const _ = require('lodash');
 const fs = require('fs');
 const https = require('https');
+const multer = require('multer');
+const mime = require('mime');
 
 let app = express();
 
-app.all('/downloadfromurl', (req, res) => {
-        console.log('...');
-        let file = fs.createWriteStream('folder/bd.jpg');
-        let stream = https.get("https://media.distractify.com/brand-img/aN4TJYbm8/1280x671/belle-delphine-bath-water-1563550232731.jpg", 
-            function(httpres) {
-                httpres.pipe(file);
-            });
-        stream.on('finish', function() {
-            res.writeHead(301, {Location: '/'});
-            res.end();
-        });
-    })
+var multerstorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'folder/')
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + '.' + mime.getExtension(file.mimetype));
+  }
+});
+var upload = multer({ storage: multerstorage });
 
-app.get('/', (req, res) => {
+app
+    .get('/', (req, res) => {
         console.log('.')
         // после нажатия в этом файле появится список файлов и папок, лежащих в папке
-        res.send('<a href="/downloadfromurl">download</a>');        
+        res.sendFile(path.join(__dirname+'/public/form.html'));        
     })
-
-app.listen(PORT, () => console.log(`Listening on ${ PORT }`))
+    .post('/uploadfile', upload.single("filedata"), (req, res) => {
+        let filedata = req.file;
+        console.log(filedata);     
+        if(!filedata)
+            res.send("Ошибка при загрузке файла");
+        else
+            res.send("Файл загружен");      
+    })
+    .listen(PORT, () => console.log(`Listening on ${ PORT }`))
